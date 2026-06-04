@@ -7,9 +7,9 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title> Punit Joshi</title>
+        <title>Smt Mayuri Rahul Kokate</title>
         <meta name="description" content="Visitor Management System for Punit Joshi. Register and manage visitors efficiently." />
-        <link rel="icon" href="/punit.png" />
+        <link rel="icon" href="/mayuriKokate.jpg" />
       </Head>
 
       <main className="min-h-[85vh] flex flex-col items-center justify-center px-4 text-center">
@@ -19,15 +19,15 @@ export default function Home() {
           <div className="flex flex-col items-center mb-10">
             <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-orange-400 shadow-xl shadow-orange-500/25 mb-4">
               <Image
-                src="/punit.png"
-                alt="Punit Joshi"
+                src="/mayuriKokate.jpg"
+                alt="Mayuri Kokate"
                 fill
                 className="object-cover"
                 priority
               />
             </div>
             <h2 className="text-2xl font-extrabold text-slate-800">
-              Punit <span className="text-orange-500">Joshi</span>
+               Smt Mayuri Rahul Kokate
             </h2>
             <span className="mt-1.5 inline-block px-4 py-1 rounded-full bg-orange-100 text-orange-600 text-xs font-semibold tracking-wide uppercase">
               Visitor Management Portal

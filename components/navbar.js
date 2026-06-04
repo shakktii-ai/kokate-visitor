@@ -19,15 +19,15 @@ const Navbar = () => {
         <Link href="/" className="flex items-center gap-2.5">
           <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md shadow-orange-500/20 flex-shrink-0">
             <Image
-              src="/punit.png"
-              alt="Punit Joshi"
+              src="/mayuriKokate.jpg"
+              alt="Mayuri Kokate"
               fill
               className="object-cover"
             />
           </div>
           <div className="leading-tight">
             <span className="text-slate-800 font-bold text-base tracking-tight block">
-              Punit <span className="text-orange-500">Joshi</span>
+                Smt Mayuri Rahul Kokate
             </span>
             <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
           </div>
@@ -81,10 +81,10 @@ const Navbar = () => {
           {/* Mobile Profile */}
           <div className="flex items-center gap-2.5 py-3 border-b border-orange-50">
             <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-300 shadow-sm flex-shrink-0">
-              <Image src="/punit.png" alt="Punit Joshi" fill className="object-cover" />
+              <Image src="/mayuriKokate.jpg" alt="Mayuri Kokate" fill className="object-cover" />
             </div>
             <div>
-              <p className="text-slate-800 text-sm font-bold">Punit Joshi</p>
+              <p className="text-slate-800 text-sm font-bold">Smt Mayuri Rahul Kokate</p>
               <p className="text-orange-500 text-xs">Visitor Management</p>
             </div>
           </div>

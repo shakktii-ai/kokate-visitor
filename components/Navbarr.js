@@ -27,8 +27,8 @@ const Navbarr = () => {
       <div className="flex items-center gap-3 px-4 py-4 border-b border-orange-50">
         <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md flex-shrink-0">
           <Image
-            src="/punit.png"
-            alt="Punit Joshi"
+            src="/mayuriKokate.jpg"
+            alt="Mayuri Kokate"
             fill
             className="object-cover"
           />
@@ -36,7 +36,7 @@ const Navbarr = () => {
         {!collapsed && (
           <div className="leading-tight min-w-0">
             <p className="text-slate-800 font-bold text-sm whitespace-nowrap">
-              Punit <span className="text-orange-500">Joshi</span>
+                Smt Mayuri Rahul Kokate
             </p>
             <p className="text-slate-400 text-[10px] font-medium">Admin Panel</p>
           </div>
