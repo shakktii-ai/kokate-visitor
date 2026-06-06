@@ -3,8 +3,8 @@ import connectDb from "@/middleware/mongoose";
 // Hardcoded admin credentials (can be moved to env vars)
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const USER_USERNAME  = process.env.USER_USERNAME  || "user";
-const USER_PASSWORD  = process.env.USER_PASSWORD  || "user123";
+const USER_USERNAME  = process.env.USER_USERNAME  || "RKokate";
+const USER_PASSWORD  = process.env.USER_PASSWORD  || "123456";
 
 const handler = async (req, res) => {
   if (req.method !== "POST") {

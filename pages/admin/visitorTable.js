@@ -204,8 +204,6 @@ const DetailModal = ({ visitor, onClose }) => {
     ["House No.", visitor.houseNo],
     ["Landmark", visitor.landmark],
     ["Village / Town", visitor.village],
-    ["State", visitor.state],
-    ["Nation", visitor.nation],
     ["Pincode", visitor.pincode],
     ["Purpose", visitor.purpose],
     ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString() : "—"],
@@ -533,7 +531,7 @@ export default function VisitorTable() {
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-slate-700">{v.village}</p>
-                        <p className="text-slate-400 text-xs">{v.state}</p>
+                        <p className="text-slate-400 text-xs">{v.pincode || ""}</p>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize border ${purposeColors[v.purpose] || "bg-gray-100 text-gray-600 border-gray-200"}`}>

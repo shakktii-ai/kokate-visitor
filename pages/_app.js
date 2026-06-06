@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "react-toastify/dist/ReactToastify.css";
+import "react-transliterate/dist/index.css";
 import Navbar from "@/components/navbar";
 import Navbarr from "@/components/Navbarr";
 import Footer from "@/components/footer";

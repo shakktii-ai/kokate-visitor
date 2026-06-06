@@ -23,8 +23,6 @@ const FormDataSchema = new mongoose.Schema({
   houseNo: String,
   landmark: String,
   village: String,
-  state: String,
-  nation: String,
   pincode: Number,
   purpose: String,
   patiantName: String,

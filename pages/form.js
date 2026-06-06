@@ -2,6 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 import { HiCamera, HiCheckCircle, HiArrowLeft, HiArrowRight, HiCloudUpload } from "react-icons/hi";
+import dynamic from 'next/dynamic';
+
+const ReactTransliterate = dynamic(
+  () => import('react-transliterate').then(mod => mod.ReactTransliterate),
+  { ssr: false }
+);
 
 const Form = () => {
   const router = useRouter();
@@ -12,7 +18,7 @@ const Form = () => {
 
   const [formData, setFormData] = useState({
     photos: "", fullName: "", email: "", phoneNo: "", age: "", sex: "", DOB: "", aadharVoter: "",
-    houseNo: "", landmark: "", village: "", state: "", nation: "", pincode: "",
+    houseNo: "", landmark: "", village: "", pincode: "",
     purpose: "",
     patiantName: "", hospitalName: "", trackingDoctor: "", reason: "",
     studentName: "", studentDOB: "", studentGender: "", studentCategory: "", studentPhoto: "",
@@ -51,8 +57,7 @@ const Form = () => {
     return calculatedAge >= 0 ? calculatedAge.toString() : "";
   };
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
+  const handleTextChange = useCallback((name, value) => {
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
       if (name === "DOB") {
@@ -86,6 +91,11 @@ const Form = () => {
     });
   }, []);
 
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    handleTextChange(name, value);
+  }, [handleTextChange]);
+
   const handleFileChange = useCallback((e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
@@ -101,7 +111,7 @@ const Form = () => {
   // Revisit Pre-fill Logic
   const handleRevisitLookup = async () => {
     if (!searchPhone) {
-      toast.warning("Please enter a phone number to search.");
+      toast.warning("कृपया शोधण्यासाठी फोन नंबर प्रविष्ट करा.");
       return;
     }
     
@@ -124,14 +134,14 @@ const Form = () => {
         }));
 
         setErrors({});
-        toast.success(`Welcome back, ${data.fullName}! Your profile has been pre-filled.`);
+        toast.success(`पुन्हा स्वागत आहे, ${data.fullName}! तुमचे तपशील भरले गेले आहेत.`);
         setCurrentStep(3);
       } else {
-        toast.error(data.error || "No records found. Please register as a new visitor.");
+        toast.error(data.error || "कोणतीही नोंद सापडली नाही. कृपया नवीन भेट देणारे म्हणून नोंदणी करा.");
       }
     } catch (error) {
       console.error("Error looking up returning visitor:", error);
-      toast.error("An error occurred during lookup. Please fill manually.");
+      toast.error("तपशील शोधताना त्रुटी आली. कृपया स्वतः तपशील भरा.");
     } finally {
       setIsSearching(false);
     }
@@ -142,46 +152,46 @@ const Form = () => {
 
     if (step === 1) {
       if (!formData.fullName || !formData.fullName.trim()) {
-        newErrors.fullName = "Full Name is required.";
+        newErrors.fullName = "पूर्ण नाव आवश्यक आहे.";
       } else if (formData.fullName.trim().length < 3) {
-        newErrors.fullName = "Full Name must be at least 3 characters.";
-      } else if (!/^[A-Za-z\s]+$/.test(formData.fullName.trim())) {
-        newErrors.fullName = "Full Name must contain only alphabets and spaces.";
+        newErrors.fullName = "पूर्ण नाव किमान ३ अक्षरांचे असावे.";
+      } else if (!/^[A-Za-z\u0900-\u097F\s]+$/.test(formData.fullName.trim())) {
+        newErrors.fullName = "नावामध्ये फक्त अक्षरे आणि जागा असावी.";
       }
 
       if (formData.email && formData.email.trim() !== "") {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email.trim())) {
-          newErrors.email = "Please enter a valid email address.";
+          newErrors.email = "कृपया वैध ईमेल पत्ता प्रविष्ट करा.";
         }
       }
 
       if (!formData.phoneNo || !formData.phoneNo.trim()) {
-        newErrors.phoneNo = "Phone Number is required.";
+        newErrors.phoneNo = "फोन नंबर आवश्यक आहे.";
       } else if (!/^\d{10}$/.test(formData.phoneNo.trim())) {
-        newErrors.phoneNo = "Phone Number must be exactly 10 digits.";
+        newErrors.phoneNo = "फोन नंबर अचूक १० अंकी असणे आवश्यक आहे.";
       }
 
       if (!formData.age || formData.age.toString().trim() === "") {
-        newErrors.age = "Age is required.";
+        newErrors.age = "वय आवश्यक आहे.";
       } else {
         const parsedAge = parseInt(formData.age, 10);
         if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
-          newErrors.age = "Age must be between 1 and 120.";
+          newErrors.age = "वय १ ते १२० दरम्यान असावे.";
         }
       }
 
       if (!formData.sex) {
-        newErrors.sex = "Gender selection is required.";
+        newErrors.sex = "लिंग निवडणे आवश्यक आहे.";
       }
 
       if (!formData.DOB) {
-        newErrors.DOB = "Date of Birth is required.";
+        newErrors.DOB = "जन्मतारीख आवश्यक आहे.";
       } else {
         const dobDate = new Date(formData.DOB);
         const today = new Date();
         if (dobDate > today) {
-          newErrors.DOB = "Date of Birth cannot be in the future.";
+          newErrors.DOB = "जन्मतारीख भविष्यातील नसावी.";
         }
       }
 
@@ -189,50 +199,44 @@ const Form = () => {
         const val = formData.aadharVoter.trim();
         if (/^\d+$/.test(val)) {
           if (val.length !== 12) {
-            newErrors.aadharVoter = "Aadhar Card must be exactly 12 digits.";
+            newErrors.aadharVoter = "आधार कार्ड अचूक १२ अंकी असणे आवश्यक आहे.";
           }
         } else if (val.length < 5) {
-          newErrors.aadharVoter = "Please enter a valid Aadhar or Voter ID.";
+          newErrors.aadharVoter = "कृपया वैध आधार किंवा मतदार ओळखपत्र प्रविष्ट करा.";
         }
       }
     }
 
     if (step === 2) {
       if (!formData.houseNo || !formData.houseNo.trim()) {
-        newErrors.houseNo = "House No. is required.";
+        newErrors.houseNo = "घर क्रमांक आवश्यक आहे.";
       }
       if (!formData.village || !formData.village.trim()) {
-        newErrors.village = "Village / Town is required.";
-      }
-      if (!formData.state || !formData.state.trim()) {
-        newErrors.state = "State is required.";
-      }
-      if (!formData.nation || !formData.nation.trim()) {
-        newErrors.nation = "Nation is required.";
+        newErrors.village = "गाव / शहर आवश्यक आहे.";
       }
       if (!formData.pincode || !formData.pincode.toString().trim()) {
-        newErrors.pincode = "Pincode is required.";
+        newErrors.pincode = "पिनकोड आवश्यक आहे.";
       } else if (!/^\d{6}$/.test(formData.pincode.toString().trim())) {
-        newErrors.pincode = "Pincode must be exactly 6 digits.";
+        newErrors.pincode = "पिनकोड अचूक ६ अंकी असणे आवश्यक आहे.";
       }
     }
 
     if (step === 3) {
       if (!formData.purpose) {
-        newErrors.purpose = "Purpose of Visit is required.";
+        newErrors.purpose = "भेट देण्याचा हेतू आवश्यक आहे.";
       } else {
         switch (formData.purpose) {
           case "medical":
-            if (!formData.patiantName || !formData.patiantName.trim()) newErrors.patiantName = "Patient name is required.";
-            if (!formData.hospitalName || !formData.hospitalName.trim()) newErrors.hospitalName = "Hospital name is required.";
-            if (!formData.trackingDoctor || !formData.trackingDoctor.trim()) newErrors.trackingDoctor = "Doctor name is required.";
-            if (!formData.reason || !formData.reason.trim()) newErrors.reason = "Reason for visit is required.";
+            if (!formData.patiantName || !formData.patiantName.trim()) newErrors.patiantName = "रुग्णाचे नाव आवश्यक आहे.";
+            if (!formData.hospitalName || !formData.hospitalName.trim()) newErrors.hospitalName = "रुग्णालयाचे नाव आवश्यक आहे.";
+            if (!formData.trackingDoctor || !formData.trackingDoctor.trim()) newErrors.trackingDoctor = "डॉक्टरचे नाव आवश्यक आहे.";
+            if (!formData.reason || !formData.reason.trim()) newErrors.reason = "भेट देण्याचे कारण आवश्यक आहे.";
             break;
           case "education":
-            if (!formData.studentName || !formData.studentName.trim()) newErrors.studentName = "Student name is required.";
-            if (!formData.studentDOB) newErrors.studentDOB = "Student Date of Birth is required.";
-            if (!formData.studentGender) newErrors.studentGender = "Student Gender is required.";
-            if (!formData.studentCategory || !formData.studentCategory.trim()) newErrors.studentCategory = "Category is required.";
+            if (!formData.studentName || !formData.studentName.trim()) newErrors.studentName = "विद्यार्थ्याचे नाव आवश्यक आहे.";
+            if (!formData.studentDOB) newErrors.studentDOB = "विद्यार्थ्याची जन्मतारीख आवश्यक आहे.";
+            if (!formData.studentGender) newErrors.studentGender = "विद्यार्थ्याचे लिंग आवश्यक आहे.";
+            if (!formData.studentCategory || !formData.studentCategory.trim()) newErrors.studentCategory = "जात प्रवर्ग आवश्यक आहे.";
             break;
           case "job": {
             const hasJobAppField = [
@@ -253,60 +257,60 @@ const Form = () => {
             ].some(val => val && val.trim() !== "");
 
             if (!hasJobAppField && !hasEmployeeField) {
-              newErrors.jobFullName = "Please complete either Job Application or Employee Transfer.";
-              newErrors.employeeName = "Please complete either Job Application or Employee Transfer.";
+              newErrors.jobFullName = "कृपया नोकरी अर्ज किंवा कर्मचारी बदली यापैकी एक पर्याय पूर्ण भरा.";
+              newErrors.employeeName = "कृपया नोकरी अर्ज किंवा कर्मचारी बदली यापैकी एक पर्याय पूर्ण भरा.";
             } else {
               if (hasJobAppField) {
-                if (!formData.jobFullName || !formData.jobFullName.trim()) newErrors.jobFullName = "Full Name is required.";
-                if (!formData.jobPosition || !formData.jobPosition.trim()) newErrors.jobPosition = "Position is required.";
-                if (!formData.jobDepartment || !formData.jobDepartment.trim()) newErrors.jobDepartment = "Department is required.";
-                if (!formData.jobLocation || !formData.jobLocation.trim()) newErrors.jobLocation = "Preferred Location is required.";
-                if (!formData.jobSalary || !formData.jobSalary.toString().trim()) newErrors.jobSalary = "Expected Salary is required.";
+                if (!formData.jobFullName || !formData.jobFullName.trim()) newErrors.jobFullName = "पूर्ण नाव आवश्यक आहे.";
+                if (!formData.jobPosition || !formData.jobPosition.trim()) newErrors.jobPosition = "अर्ज केलेले पद आवश्यक आहे.";
+                if (!formData.jobDepartment || !formData.jobDepartment.trim()) newErrors.jobDepartment = "विभाग आवश्यक आहे.";
+                if (!formData.jobLocation || !formData.jobLocation.trim()) newErrors.jobLocation = "अपेक्षित ठिकाण आवश्यक आहे.";
+                if (!formData.jobSalary || !formData.jobSalary.toString().trim()) newErrors.jobSalary = "अपेक्षित वेतन आवश्यक आहे.";
               }
               if (hasEmployeeField) {
-                if (!formData.employeeName || !formData.employeeName.trim()) newErrors.employeeName = "Employee Name is required.";
-                if (!formData.employeeId || !formData.employeeId.trim()) newErrors.employeeId = "Employee ID is required.";
-                if (!formData.employeeDepartment || !formData.employeeDepartment.trim()) newErrors.employeeDepartment = "Department is required.";
-                if (!formData.employeeDesignation || !formData.employeeDesignation.trim()) newErrors.employeeDesignation = "Designation is required.";
-                if (!formData.employeeRDepartment || !formData.employeeRDepartment.trim()) newErrors.employeeRDepartment = "Requested Department is required.";
-                if (!formData.employeeRTransfer || !formData.employeeRTransfer.trim()) newErrors.employeeRTransfer = "Requested Transfer details are required.";
+                if (!formData.employeeName || !formData.employeeName.trim()) newErrors.employeeName = "कर्मचाऱ्याचे नाव आवश्यक आहे.";
+                if (!formData.employeeId || !formData.employeeId.trim()) newErrors.employeeId = "कर्मचारी आयडी आवश्यक आहे.";
+                if (!formData.employeeDepartment || !formData.employeeDepartment.trim()) newErrors.employeeDepartment = "विभाग आवश्यक आहे.";
+                if (!formData.employeeDesignation || !formData.employeeDesignation.trim()) newErrors.employeeDesignation = "पदनाम आवश्यक आहे.";
+                if (!formData.employeeRDepartment || !formData.employeeRDepartment.trim()) newErrors.employeeRDepartment = "विनंती केलेला विभाग आवश्यक आहे.";
+                if (!formData.employeeRTransfer || !formData.employeeRTransfer.trim()) newErrors.employeeRTransfer = "बदलीचे सविस्तर तपशील आवश्यक आहेत.";
               }
             }
             break;
           }
           case "schemes":
-            if (!formData.schemeName || !formData.schemeName.trim()) newErrors.schemeName = "Scheme Name is required.";
-            if (!formData.schemeApplyDate) newErrors.schemeApplyDate = "Apply Date is required.";
-            if (!formData.schemeMaritalStatus) newErrors.schemeMaritalStatus = "Marital Status is required.";
-            if (!formData.schemeCategary || !formData.schemeCategary.trim()) newErrors.schemeCategary = "Category is required.";
+            if (!formData.schemeName || !formData.schemeName.trim()) newErrors.schemeName = "योजनेचे नाव आवश्यक आहे.";
+            if (!formData.schemeApplyDate) newErrors.schemeApplyDate = "अर्जाची तारीख आवश्यक आहे.";
+            if (!formData.schemeMaritalStatus) newErrors.schemeMaritalStatus = "वैवाहिक स्थिती आवश्यक आहे.";
+            if (!formData.schemeCategary || !formData.schemeCategary.trim()) newErrors.schemeCategary = "जात प्रवर्ग आवश्यक आहे.";
             break;
           case "business":
-            if (!formData.businessName || !formData.businessName.trim()) newErrors.businessName = "Business Name is required.";
-            if (!formData.businessType || !formData.businessType.trim()) newErrors.businessType = "Business Type is required.";
-            if (!formData.businessSector || !formData.businessSector.trim()) newErrors.businessSector = "Business Sector is required.";
-            if (!formData.businessDOE) newErrors.businessDOE = "Date of Establishment is required.";
-            if (!formData.businessAddress || !formData.businessAddress.trim()) newErrors.businessAddress = "Business Address is required.";
+            if (!formData.businessName || !formData.businessName.trim()) newErrors.businessName = "व्यवसायाचे नाव आवश्यक आहे.";
+            if (!formData.businessType || !formData.businessType.trim()) newErrors.businessType = "व्यवसायाचा प्रकार आवश्यक आहे.";
+            if (!formData.businessSector || !formData.businessSector.trim()) newErrors.businessSector = "व्यवसाय क्षेत्र आवश्यक आहे.";
+            if (!formData.businessDOE) newErrors.businessDOE = "स्थापना तारीख आवश्यक आहे.";
+            if (!formData.businessAddress || !formData.businessAddress.trim()) newErrors.businessAddress = "व्यवसायाचा पत्ता आवश्यक आहे.";
             if (formData.businessGST && formData.businessGST.trim() !== "") {
               if (formData.businessGST.trim().length !== 15) {
-                newErrors.businessGST = "GST Number must be exactly 15 characters.";
+                newErrors.businessGST = "जीएसटी क्रमांक अचूक १५ अक्षरी असणे आवश्यक आहे.";
               }
             }
             break;
           case "utility":
-            if (!formData.utilityServiceInstallation || !formData.utilityServiceInstallation.trim()) newErrors.utilityServiceInstallation = "Service Installation is required.";
-            if (!formData.utilityProblem || !formData.utilityProblem.trim()) newErrors.utilityProblem = "Problem Description is required.";
+            if (!formData.utilityServiceInstallation || !formData.utilityServiceInstallation.trim()) newErrors.utilityServiceInstallation = "सुविधेचे नाव / प्रकार आवश्यक आहे.";
+            if (!formData.utilityProblem || !formData.utilityProblem.trim()) newErrors.utilityProblem = "समस्येचे वर्णन आवश्यक आहे.";
             break;
           case "police":
-            if (!formData.policeApplicationNo || !formData.policeApplicationNo.trim()) newErrors.policeApplicationNo = "Application No. is required.";
-            if (!formData.policeApplicationDate) newErrors.policeApplicationDate = "Application Date is required.";
-            if (!formData.policeApplicationPlace || !formData.policeApplicationPlace.trim()) newErrors.policeApplicationPlace = "Application Place is required.";
-            if (!formData.policeIncidentDetails || !formData.policeIncidentDetails.trim()) newErrors.policeIncidentDetails = "Incident Details are required.";
-            if (!formData.policeDeclaration || !formData.policeDeclaration.trim()) newErrors.policeDeclaration = "Declaration is required.";
+            if (!formData.policeApplicationNo || !formData.policeApplicationNo.trim()) newErrors.policeApplicationNo = "अर्ज क्रमांक आवश्यक आहे.";
+            if (!formData.policeApplicationDate) newErrors.policeApplicationDate = "अर्जाची तारीख आवश्यक आहे.";
+            if (!formData.policeApplicationPlace || !formData.policeApplicationPlace.trim()) newErrors.policeApplicationPlace = "अर्जाचे ठिकाण आवश्यक आहे.";
+            if (!formData.policeIncidentDetails || !formData.policeIncidentDetails.trim()) newErrors.policeIncidentDetails = "घटनेचा सविस्तर तपशील आवश्यक आहे.";
+            if (!formData.policeDeclaration || !formData.policeDeclaration.trim()) newErrors.policeDeclaration = "घोषणापत्र आवश्यक आहे.";
             break;
           case "administrative":
-            if (!formData.projectName || !formData.projectName.trim()) newErrors.projectName = "Project Name is required.";
-            if (!formData.projectLocation || !formData.projectLocation.trim()) newErrors.projectLocation = "Project Location is required.";
-            if (!formData.projectProblem || !formData.projectProblem.trim()) newErrors.projectProblem = "Problem Description is required.";
+            if (!formData.projectName || !formData.projectName.trim()) newErrors.projectName = "प्रकल्पाचे नाव आवश्यक आहे.";
+            if (!formData.projectLocation || !formData.projectLocation.trim()) newErrors.projectLocation = "प्रकल्पाचे ठिकाण आवश्यक आहे.";
+            if (!formData.projectProblem || !formData.projectProblem.trim()) newErrors.projectProblem = "समस्येचे वर्णन आवश्यक आहे.";
             break;
         }
       }
@@ -323,7 +327,7 @@ const Form = () => {
       if (validateStep(currentStep)) {
         setCurrentStep((prev) => prev + 1);
       } else {
-        toast.error("Please fill in all required fields correctly.");
+        toast.error("कृपया सर्व आवश्यक क्षेत्रे योग्यरित्या भरा.");
       }
       return;
     }
@@ -342,7 +346,7 @@ const Form = () => {
     
     if (!allStepsValid) {
       setCurrentStep(firstFailedStep);
-      toast.error(`Please correct the errors on Step ${firstFailedStep} before submitting.`);
+      toast.error(`कृपया सबमिट करण्यापूर्वी पायरी ${firstFailedStep} मधील त्रुटी सुधारा.`);
       return;
     }
 
@@ -355,20 +359,20 @@ const Form = () => {
       });
       const result = await res.json();
       if (res.ok) {
-        toast.success("Visitor registered successfully!");
+        toast.success("भेट देणाऱ्याची यशस्वी नोंदणी झाली!");
         setIsSubmitted(true);
       } else {
-        toast.error(result.error || "Submission failed.");
+        toast.error(result.error || "नोंदणी सबमिट करण्यास अपयश आले.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("There was an error submitting the form.");
+      toast.error("फॉर्म सबमिट करताना एरर आली.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const stepLabels = ["Personal Info", "Address", "Purpose", "Review"];
+  const stepLabels = ["वैयक्तिक माहिती", "पत्ता", "भेट देण्याचा हेतू", "पुनरावलोकन"];
 
   const inputClass =
     "w-full bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 p-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300";
@@ -377,21 +381,57 @@ const Form = () => {
 
   const renderInput = (label, name, type = "text", placeholder = "") => {
     const hasError = !!errors[name];
+    const noTransliterateNames = [
+      "email",
+      "phoneNo",
+      "age",
+      "pincode",
+      "aadharVoter",
+      "policeApplicationNo",
+      "businessGST",
+      "employeeId",
+      "schemeAddhar",
+      "jobSalary"
+    ];
+
+    const shouldTransliterate = type === "text" && !noTransliterateNames.includes(name);
+
     return (
       <div>
         <label className={labelClass}>{label}</label>
-        <input
-          type={type}
-          name={name}
-          value={formData[name]}
-          onChange={handleChange}
-          placeholder={placeholder || `Enter ${label.toLowerCase()}`}
-          className={`${inputClass} ${
-            hasError
-              ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-              : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-          }`}
-        />
+        {shouldTransliterate ? (
+          <ReactTransliterate
+            value={formData[name] || ""}
+            onChangeText={(val) => handleTextChange(name, val)}
+            lang="mr"
+            renderComponent={(props) => (
+              <input
+                type={type}
+                name={name}
+                placeholder={placeholder || "प्रविष्ट करा"}
+                className={`${inputClass} ${
+                  hasError
+                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
+                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
+                }`}
+                {...props}
+              />
+            )}
+          />
+        ) : (
+          <input
+            type={type}
+            name={name}
+            value={formData[name] || ""}
+            onChange={handleChange}
+            placeholder={placeholder || "प्रविष्ट करा"}
+            className={`${inputClass} ${
+              hasError
+                ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
+                : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
+            }`}
+          />
+        )}
         {hasError && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
       </div>
     );
@@ -412,7 +452,7 @@ const Form = () => {
               : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
           }`}
         >
-          <option value="">Select {label.toLowerCase()}</option>
+          <option value="">{label} निवडा</option>
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
@@ -456,7 +496,7 @@ const Form = () => {
               onClick={() => document.getElementById(`file-${fieldName}`).click()}
             >
               <HiCloudUpload className={`w-10 h-10 mb-2 ${hasError ? "text-red-400" : "text-slate-400"}`} />
-              <p className={`text-sm ${hasError ? "text-red-500" : "text-slate-500"}`}>Click to upload</p>
+              <p className={`text-sm ${hasError ? "text-red-500" : "text-slate-500"}`}>अपलोड करण्यासाठी क्लिक करा</p>
             </div>
           )}
           <input
@@ -477,153 +517,171 @@ const Form = () => {
       case "medical":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Patient Name", "patiantName")}
-            {renderInput("Hospital Name", "hospitalName")}
-            {renderInput("Tracking Doctor", "trackingDoctor")}
-            {renderInput("Reason", "reason")}
+            {renderInput("रुग्णाचे नाव", "patiantName")}
+            {renderInput("रुग्णालयाचे नाव", "hospitalName")}
+            {renderInput("उपचार करणारे डॉक्टर", "trackingDoctor")}
+            {renderInput("भेट देण्याचे कारण", "reason")}
           </div>
         );
       case "education":
         return (
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Student Name", "studentName")}
-              {renderInput("Student DOB", "studentDOB", "date")}
-              {renderSelect("Student Gender", "studentGender", [
-                { value: "male", label: "Male" },
-                { value: "female", label: "Female" },
-                { value: "other", label: "Other" },
+              {renderInput("विद्यार्थ्याचे नाव", "studentName")}
+              {renderInput("विद्यार्थ्याची जन्मतारीख", "studentDOB", "date")}
+              {renderSelect("विद्यार्थ्याचे लिंग", "studentGender", [
+                { value: "male", label: "पुरुष" },
+                { value: "female", label: "महिला" },
+                { value: "other", label: "इतर" },
               ])}
-              {renderInput("Category", "studentCategory")}
+              {renderInput("जात प्रवर्ग", "studentCategory")}
             </div>
-            {renderFileUpload("Student Photo", "studentPhoto")}
+            {renderFileUpload("विद्यार्थ्याचा फोटो", "studentPhoto")}
           </div>
         );
       case "job":
         return (
           <div className="space-y-4 mt-4">
-            <h4 className="text-slate-800 font-bold text-sm border-b border-orange-100 pb-1">Job Application</h4>
+            <h4 className="text-slate-800 font-bold text-sm border-b border-orange-100 pb-1">नोकरी अर्ज</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Full Name", "jobFullName")}
-              {renderInput("Position Applied For", "jobPosition")}
-              {renderInput("Department", "jobDepartment")}
-              {renderInput("Preferred Location", "jobLocation")}
-              {renderInput("Expected Salary", "jobSalary")}
+              {renderInput("उमेदवाराचे पूर्ण नाव", "jobFullName")}
+              {renderInput("अर्ज केलेले पद", "jobPosition")}
+              {renderInput("विभाग", "jobDepartment")}
+              {renderInput("अपेक्षित ठिकाण", "jobLocation")}
+              {renderInput("अपेक्षित वेतन", "jobSalary")}
             </div>
-            <h4 className="text-slate-800 font-bold text-sm border-b border-orange-100 pb-1 pt-2">Employee Transfer</h4>
+            <h4 className="text-slate-800 font-bold text-sm border-b border-orange-100 pb-1 pt-2">कर्मचारी बदली</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Employee Name", "employeeName")}
-              {renderInput("Employee ID", "employeeId")}
-              {renderInput("Department", "employeeDepartment")}
-              {renderInput("Designation", "employeeDesignation")}
-              {renderInput("Requested Department", "employeeRDepartment")}
-              {renderInput("Requested Transfer", "employeeRTransfer")}
+              {renderInput("कर्मचाऱ्याचे नाव", "employeeName")}
+              {renderInput("कर्मचारी आयडी", "employeeId")}
+              {renderInput("विभाग", "employeeDepartment")}
+              {renderInput("पदनाम", "employeeDesignation")}
+              {renderInput("विनंती केलेला विभाग", "employeeRDepartment")}
+              {renderInput("बदलीचे ठिकाण/तपशील", "employeeRTransfer")}
             </div>
           </div>
         );
       case "schemes":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Scheme Name", "schemeName")}
-            {renderInput("Previous Application", "schemePApplication")}
-            {renderInput("Apply Date", "schemeApplyDate", "date")}
-            {renderSelect("Marital Status", "schemeMaritalStatus", [
-              { value: "single", label: "Single" },
-              { value: "married", label: "Married" },
-              { value: "divorced", label: "Divorced" },
-              { value: "widowed", label: "Widowed" },
+            {renderInput("योजनेचे नाव", "schemeName")}
+            {renderInput("पूर्वी अर्ज केला आहे का (तपशील)", "schemePApplication")}
+            {renderInput("अर्ज केल्याची तारीख", "schemeApplyDate", "date")}
+            {renderSelect("वैवाहिक स्थिती", "schemeMaritalStatus", [
+              { value: "single", label: "अविवाहित" },
+              { value: "married", label: "विवाहित" },
+              { value: "divorced", label: "घटस्फोटित" },
+              { value: "widowed", label: "विधवा / विधुर" },
             ])}
-            {renderInput("Category", "schemeCategary")}
-            {renderInput("Aadhar Number", "schemeAddhar")}
+            {renderInput("जात प्रवर्ग", "schemeCategary")}
+            {renderInput("आधार कार्ड क्रमांक", "schemeAddhar")}
           </div>
         );
       case "business":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Business Name", "businessName")}
-            {renderInput("Business Type", "businessType")}
-            {renderInput("Business Sector", "businessSector")}
-            {renderInput("Registration No.", "businessRNo")}
-            {renderInput("Date of Establishment", "businessDOE", "date")}
-            {renderInput("GST Number", "businessGST")}
+            {renderInput("व्यवसायाचे नाव", "businessName")}
+            {renderInput("व्यवसायाचा प्रकार", "businessType")}
+            {renderInput("व्यवसाय क्षेत्र", "businessSector")}
+            {renderInput("नोंदणी क्रमांक", "businessRNo")}
+            {renderInput("स्थापना तारीख", "businessDOE", "date")}
+            {renderInput("जीएसटी (GST) क्रमांक", "businessGST")}
             <div className="md:col-span-2">
-              {renderInput("Business Address", "businessAddress")}
+              {renderInput("व्यवसायाचा पत्ता", "businessAddress")}
             </div>
           </div>
         );
       case "utility":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Service Installation", "utilityServiceInstallation")}
-            {renderInput("Problem Description", "utilityProblem")}
+            {renderInput("सुविधेचे नाव / प्रकार", "utilityServiceInstallation")}
+            {renderInput("समस्येचे वर्णन", "utilityProblem")}
           </div>
         );
       case "police":
         return (
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Application No.", "policeApplicationNo")}
-              {renderInput("Application Date", "policeApplicationDate", "date")}
-              {renderInput("Application Place", "policeApplicationPlace")}
-              {renderInput("Involved Person Name", "policeInvolveName")}
+              {renderInput("तक्रार / अर्ज क्रमांक", "policeApplicationNo")}
+              {renderInput("अर्जाची तारीख", "policeApplicationDate", "date")}
+              {renderInput("अर्जाचे ठिकाण", "policeApplicationPlace")}
+              {renderInput("संबंधित व्यक्तीचे नाव", "policeInvolveName")}
             </div>
             <div>
-              <label className={labelClass}>Incident Details</label>
-              <textarea
-                name="policeIncidentDetails"
-                value={formData.policeIncidentDetails}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none ${
-                  errors.policeIncidentDetails
-                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-                }`}
-                placeholder="Describe the incident..."
+              <label className={labelClass}>घटनेचा तपशील</label>
+              <ReactTransliterate
+                value={formData.policeIncidentDetails || ""}
+                onChangeText={(val) => handleTextChange("policeIncidentDetails", val)}
+                lang="mr"
+                renderComponent={(props) => (
+                  <textarea
+                    name="policeIncidentDetails"
+                    rows={3}
+                    className={`${inputClass} resize-none ${
+                      errors.policeIncidentDetails
+                        ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
+                        : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
+                    }`}
+                    placeholder="घटनेचे सविस्तर वर्णन येथे लिहा..."
+                    {...props}
+                  />
+                )}
               />
               {errors.policeIncidentDetails && (
                 <p className="text-xs text-red-500 mt-1">{errors.policeIncidentDetails}</p>
               )}
             </div>
             <div>
-              <label className={labelClass}>Declaration</label>
-              <textarea
-                name="policeDeclaration"
-                value={formData.policeDeclaration}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none ${
-                  errors.policeDeclaration
-                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-                }`}
-                placeholder="Your declaration..."
+              <label className={labelClass}>स्वयंघोषणापत्र</label>
+              <ReactTransliterate
+                value={formData.policeDeclaration || ""}
+                onChangeText={(val) => handleTextChange("policeDeclaration", val)}
+                lang="mr"
+                renderComponent={(props) => (
+                  <textarea
+                    name="policeDeclaration"
+                    rows={3}
+                    className={`${inputClass} resize-none ${
+                      errors.policeDeclaration
+                        ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
+                        : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
+                    }`}
+                    placeholder="आपली स्वयंघोषणा येथे लिहा..."
+                    {...props}
+                  />
+                )}
               />
               {errors.policeDeclaration && (
                 <p className="text-xs text-red-500 mt-1">{errors.policeDeclaration}</p>
               )}
             </div>
-            {renderFileUpload("Photo Evidence", "policePhoto")}
+            {renderFileUpload("घटनेचा पुरावा किंवा फोटो", "policePhoto")}
           </div>
         );
       case "administrative":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Project Name", "projectName")}
-            {renderInput("Project Location", "projectLocation")}
+            {renderInput("प्रकल्पाचे नाव", "projectName")}
+            {renderInput("प्रकल्पाचे ठिकाण", "projectLocation")}
             <div className="md:col-span-2">
-              <label className={labelClass}>Problem Description</label>
-              <textarea
-                name="projectProblem"
-                value={formData.projectProblem}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none ${
-                  errors.projectProblem
-                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-                }`}
-                placeholder="Describe the problem..."
+              <label className={labelClass}>समस्येचे वर्णन</label>
+              <ReactTransliterate
+                value={formData.projectProblem || ""}
+                onChangeText={(val) => handleTextChange("projectProblem", val)}
+                lang="mr"
+                renderComponent={(props) => (
+                  <textarea
+                    name="projectProblem"
+                    rows={3}
+                    className={`${inputClass} resize-none ${
+                      errors.projectProblem
+                        ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
+                        : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
+                    }`}
+                    placeholder="समस्येचे सविस्तर वर्णन येथे लिहा..."
+                    {...props}
+                  />
+                )}
               />
               {errors.projectProblem && (
                 <p className="text-xs text-red-500 mt-1">{errors.projectProblem}</p>
@@ -645,16 +703,16 @@ const Form = () => {
             <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-4 md:p-5 shadow-sm space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <div>
-                  <h4 className="text-slate-800 font-bold text-sm">Returning Visitor?</h4>
+                  <h4 className="text-slate-800 font-bold text-sm">पूर्वी भेट दिली आहे का?</h4>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Quickly pre-fill your details using your registered phone number.
+                    तुमच्या नोंदणीकृत फोन नंबरचा वापर करून तुमचे तपशील त्वरित भरा.
                   </p>
                 </div>
               </div>
               <div className="flex gap-2">
                 <input
                   type="tel"
-                  placeholder="Enter registered phone number..."
+                  placeholder="नोंदणीकृत फोन नंबर टाका..."
                   value={searchPhone}
                   onChange={(e) => setSearchPhone(e.target.value)}
                   className="flex-1 px-4 py-2.5 bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 rounded-xl text-slate-800 placeholder-slate-400 outline-none text-sm transition-all"
@@ -671,59 +729,57 @@ const Form = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Searching...
+                      शोधत आहे...
                     </>
                   ) : (
-                    "Look Up Details"
+                    "तपशील शोधा"
                   )}
                 </button>
               </div>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-800">Personal Information</h3>
-            {renderFileUpload("Photo", "photos")}
+            <h3 className="text-xl font-bold text-slate-800">वैयक्तिक माहिती</h3>
+            {renderFileUpload("फोटो", "photos")}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Full Name", "fullName")}
-              {renderInput("Email", "email", "email")}
-              {renderInput("Phone Number", "phoneNo", "tel")}
-              {renderInput("Age", "age", "number")}
-              {renderSelect("Gender", "sex", [
-                { value: "male", label: "Male" },
-                { value: "female", label: "Female" },
-                { value: "other", label: "Other" },
+              {renderInput("पूर्ण नाव", "fullName")}
+              {renderInput("ईमेल", "email", "email")}
+              {renderInput("फोन नंबर", "phoneNo", "tel")}
+              {renderInput("वय", "age", "number")}
+              {renderSelect("लिंग", "sex", [
+                { value: "male", label: "पुरुष" },
+                { value: "female", label: "महिला" },
+                { value: "other", label: "इतर" },
               ])}
-              {renderInput("Date of Birth", "DOB", "date")}
-              {renderInput("Aadhar / Voter ID", "aadharVoter")}
+              {renderInput("जन्मतारीख", "DOB", "date")}
+              {renderInput("आधार / मतदार ओळखपत्र", "aadharVoter")}
             </div>
           </div>
         );
       case 2:
         return (
           <div className="space-y-5">
-            <h3 className="text-xl font-bold text-slate-800">Address Details</h3>
+            <h3 className="text-xl font-bold text-slate-800">पत्ता तपशील</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("House No.", "houseNo")}
-              {renderInput("Landmark", "landmark")}
-              {renderInput("Village / Town", "village")}
-              {renderInput("State", "state")}
-              {renderInput("Nation", "nation")}
-              {renderInput("Pincode", "pincode")}
+              {renderInput("घर क्रमांक", "houseNo")}
+              {renderInput("जवळची खूण / लँडमार्क", "landmark")}
+              {renderInput("गाव / शहर", "village")}
+              {renderInput("पिनकोड", "pincode")}
             </div>
           </div>
         );
       case 3:
         return (
           <div className="space-y-5">
-            <h3 className="text-xl font-bold text-slate-800">Purpose of Visit</h3>
-            {renderSelect("Purpose", "purpose", [
-              { value: "medical", label: "Medical" },
-              { value: "education", label: "Education" },
-              { value: "job", label: "Job" },
-              { value: "schemes", label: "Schemes" },
-              { value: "business", label: "Business" },
-              { value: "utility", label: "Utility" },
-              { value: "police", label: "Police Station" },
-              { value: "administrative", label: "Administrative" },
+            <h3 className="text-xl font-bold text-slate-800">भेट देण्याचा हेतू</h3>
+            {renderSelect("हेतू", "purpose", [
+              { value: "medical", label: "वैद्यकीय मदत" },
+              { value: "education", label: "शिक्षण" },
+              { value: "job", label: "नोकरी" },
+              { value: "schemes", label: "शासकीय योजना" },
+              { value: "business", label: "व्यवसाय" },
+              { value: "utility", label: "नागरी सुविधा" },
+              { value: "police", label: "पोलीस तक्रार/अर्ज" },
+              { value: "administrative", label: "प्रशासकीय काम" },
             ])}
             {renderPurposeFields()}
           </div>
@@ -731,34 +787,40 @@ const Form = () => {
       case 4:
         return (
           <div className="space-y-5">
-            <h3 className="text-xl font-bold text-slate-800">Review & Submit</h3>
+            <h3 className="text-xl font-bold text-slate-800">पुनरावलोकन आणि सबमिट</h3>
             {isSubmitted && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-2xl text-green-600 flex-shrink-0">
                   <HiCheckCircle className="w-8 h-8" />
                 </div>
                 <div>
-                  <h4 className="text-green-800 font-bold text-base">Visitor Registered Successfully!</h4>
+                  <h4 className="text-green-800 font-bold text-base">भेट देणाऱ्याची यशस्वी नोंदणी झाली!</h4>
                   <p className="text-xs text-green-600 mt-1 leading-relaxed">
-                    The registration has been processed successfully. You can review the details below.
+                    नोंदणी यशस्वीरित्या पूर्ण झाली आहे. आपण खालील तपशील पाहू शकता.
                   </p>
                 </div>
               </div>
             )}
             <div>
-              <label className={labelClass}>Additional Message</label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                disabled={isSubmitted}
-                rows={4}
-                className={`${inputClass} resize-none ${isSubmitted ? "bg-slate-50 text-slate-500 cursor-not-allowed border-slate-100" : ""}`}
-                placeholder="Any additional message or notes..."
+              <label className={labelClass}>अतिरिक्त संदेश किंवा नोंद</label>
+              <ReactTransliterate
+                value={formData.message || ""}
+                onChangeText={(val) => handleTextChange("message", val)}
+                lang="mr"
+                renderComponent={(props) => (
+                  <textarea
+                    name="message"
+                    disabled={isSubmitted}
+                    rows={4}
+                    className={`${inputClass} resize-none ${isSubmitted ? "bg-slate-50 text-slate-500 cursor-not-allowed border-slate-100" : ""}`}
+                    placeholder="काही अतिरिक्त निरोप किंवा टीप असल्यास येथे लिहा..."
+                    {...props}
+                  />
+                )}
               />
             </div>
             <div className="bg-orange-50/30 border border-orange-100 rounded-xl p-5 space-y-3">
-              <h4 className="text-slate-800 font-bold text-sm mb-3">Summary</h4>
+              <h4 className="text-slate-800 font-bold text-sm mb-3">नोंदणीचा सारांश</h4>
               {formData.photos && (
                 <div className="flex justify-center mb-4">
                   <img src={formData.photos} alt="Visitor" className="w-20 h-20 rounded-full object-cover border-2 border-orange-500" />
@@ -766,20 +828,18 @@ const Form = () => {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 {[
-                  ["Name", formData.fullName],
-                  ["Email", formData.email],
-                  ["Phone", formData.phoneNo],
-                  ["Age", formData.age],
-                  ["Gender", formData.sex],
-                  ["DOB", formData.DOB],
-                  ["Aadhar/Voter", formData.aadharVoter],
-                  ["House No.", formData.houseNo],
-                  ["Landmark", formData.landmark],
-                  ["Village", formData.village],
-                  ["State", formData.state],
-                  ["Nation", formData.nation],
-                  ["Pincode", formData.pincode],
-                  ["Purpose", formData.purpose],
+                  ["नाव", formData.fullName],
+                  ["ईमेल", formData.email],
+                  ["फोन नंबर", formData.phoneNo],
+                  ["वय", formData.age],
+                  ["लिंग", formData.sex === "male" ? "पुरुष" : formData.sex === "female" ? "महिला" : formData.sex === "other" ? "इतर" : formData.sex],
+                  ["जन्मतारीख", formData.DOB],
+                  ["आधार / मतदार ओळखपत्र", formData.aadharVoter],
+                  ["घर क्रमांक", formData.houseNo],
+                  ["जवळची खूण / लँडमार्क", formData.landmark],
+                  ["गाव / शहर", formData.village],
+                  ["पिनकोड", formData.pincode],
+                  ["भेट देण्याचा हेतू", formData.purpose === "medical" ? "वैद्यकीय मदत" : formData.purpose === "education" ? "शिक्षण" : formData.purpose === "job" ? "नोकरी" : formData.purpose === "schemes" ? "शासकीय योजना" : formData.purpose === "business" ? "व्यवसाय" : formData.purpose === "utility" ? "नागरी सुविधा" : formData.purpose === "police" ? "पोलीस तक्रार/अर्ज" : formData.purpose === "administrative" ? "प्रशासकीय काम" : formData.purpose],
                 ].map(([label, value]) =>
                   value ? (
                     <div key={label} className="flex justify-between py-1 border-b border-orange-100/30">
@@ -791,7 +851,7 @@ const Form = () => {
               </div>
               {formData.message && (
                 <div className="pt-2 border-t border-orange-100/50">
-                  <span className="text-slate-500 text-sm">Message: </span>
+                  <span className="text-slate-500 text-sm">संदेश/टीप: </span>
                   <span className="text-slate-800 text-sm">{formData.message}</span>
                 </div>
               )}
@@ -805,13 +865,13 @@ const Form = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-4 md:p-8">
+      <div className="min-h-screen  bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-5 md:p-8">
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
-              Visitor Registration
+            <h1 className="text-3xl pt-3 md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+              भेट देणाऱ्यांची नोंदणी
             </h1>
-            <p className="text-slate-500 mt-2">Complete all steps to register a new visitor</p>
+            <p className="text-slate-500 mt-2 ">नवीन भेट देणाऱ्याची नोंदणी करण्यासाठी सर्व पायऱ्या पूर्ण करा</p>
           </div>
 
           <div className="flex items-center justify-between px-2">
@@ -867,7 +927,7 @@ const Form = () => {
                     onClick={() => {
                       setFormData({
                         photos: "", fullName: "", email: "", phoneNo: "", age: "", sex: "", DOB: "", aadharVoter: "",
-                        houseNo: "", landmark: "", village: "", state: "", nation: "", pincode: "",
+                        houseNo: "", landmark: "", village: "", pincode: "",
                         purpose: "",
                         patiantName: "", hospitalName: "", trackingDoctor: "", reason: "",
                         studentName: "", studentDOB: "", studentGender: "", studentCategory: "", studentPhoto: "",
@@ -887,7 +947,7 @@ const Form = () => {
                     }}
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
                   >
-                    Register Another Visitor
+                    दुसऱ्या भेट देणाऱ्याची नोंदणी करा
                   </button>
                 </>
               ) : (
@@ -901,7 +961,7 @@ const Form = () => {
                       className="flex items-center gap-2 px-6 py-3 rounded-xl text-slate-600 border border-slate-200 hover:bg-slate-50 bg-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <HiArrowLeft className="w-4 h-4" />
-                      Previous
+                      मागे
                     </button>
                   ) : (
                     <div />
@@ -915,12 +975,12 @@ const Form = () => {
                         if (validateStep(currentStep)) {
                           setCurrentStep((prev) => prev + 1);
                         } else {
-                          toast.error("Please fill in all required fields correctly.");
+                          toast.error("कृपया सर्व आवश्यक क्षेत्रे योग्यरित्या भरा.");
                         }
                       }}
                       className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/10"
                     >
-                      Next
+                      पुढे
                       <HiArrowRight className="w-4 h-4" />
                     </button>
                   ) : (
@@ -936,10 +996,10 @@ const Form = () => {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          Submitting...
+                          सबमिट होत आहे...
                         </>
                       ) : (
-                        "Submit Registration"
+                        "नोंदणी सबमिट करा"
                       )}
                     </button>
                   )}

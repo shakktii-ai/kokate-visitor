@@ -222,8 +222,6 @@ const EditVisitor = ({ visitor }) => {
                 {renderInput("House No.", "houseNo")}
                 {renderInput("Landmark", "landmark")}
                 {renderInput("Village / Town", "village")}
-                {renderInput("State", "state")}
-                {renderInput("Nation", "nation")}
                 {renderInput("Pincode", "pincode")}
               </div>
             </div>

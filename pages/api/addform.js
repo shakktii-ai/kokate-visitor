@@ -27,8 +27,6 @@ const handler = async (req, res) => {
       houseNo: data.houseNo,
       landmark: data.landmark,
       village: data.village,
-      state: data.state,
-      nation: data.nation,
       pincode: data.pincode,
       purpose: data.purpose,
       patiantName: data.patiantName,
