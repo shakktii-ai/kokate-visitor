@@ -55,7 +55,7 @@ const Form = () => {
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       calculatedAge--;
     }
-    return calculatedAge >= 0 && calculatedAge <= 120 ? calculatedAge.toString() : "";
+    return calculatedAge >= 0 && calculatedAge <= 100 ? calculatedAge.toString() : "";
   };
 
   const handleTextChange = useCallback((name, value) => {
@@ -181,8 +181,8 @@ const Form = () => {
         newErrors.age = "वय आवश्यक आहे.";
       } else {
         const parsedAge = parseInt(formData.age, 10);
-        if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
-          newErrors.age = "वय १ ते १२० दरम्यान असावे.";
+        if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 100) {
+          newErrors.age = "वय १ ते १०० दरम्यान असावे.";
         }
       }
 
@@ -203,8 +203,8 @@ const Form = () => {
           if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
             calculatedAge--;
           }
-          if (calculatedAge > 120) {
-            newErrors.DOB = "जन्मतारीख १२० वर्षांपेक्षा जुनी नसावी.";
+          if (calculatedAge > 100) {
+            newErrors.DOB = "जन्मतारीख १०० वर्षांपेक्षा जुनी नसावी.";
           }
         }
       }
