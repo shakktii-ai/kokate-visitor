@@ -206,6 +206,7 @@ const DetailModal = ({ visitor, onClose }) => {
     ["Village / Town", visitor.village],
     ["Pincode", visitor.pincode],
     ["Purpose", visitor.purpose],
+    ["Registered By", visitor.addedBy],
     ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString() : "—"],
   ].filter(([, value]) => value);
 

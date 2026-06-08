@@ -9,6 +9,7 @@ const Navbarr = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
+    localStorage.removeItem("username");
     router.push("/login");
   };
 

@@ -41,7 +41,7 @@ const handler = async (req, res) => {
           .skip(skip)
           .limit(limitNum)
           .select(
-            "photos fullName email phoneNo age sex DOB village purpose createdAt aadharVoter pincode"
+            "photos fullName email phoneNo age sex DOB village purpose createdAt aadharVoter pincode addedBy"
           ),
         Form.countDocuments(query),
       ]);

@@ -75,6 +75,7 @@ const handler = async (req, res) => {
       projectLocation: data.projectLocation,
       projectProblem: data.projectProblem,
       message: data.message,
+      addedBy: data.addedBy,
     });
 
     await newVisit.save();

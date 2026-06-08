@@ -30,6 +30,7 @@ export default function Login() {
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("userRole", data.role);
+        localStorage.setItem("username", data.username || "");
         toast.success("Login successful!");
         if (data.role === "admin") {
           router.push("/admin");

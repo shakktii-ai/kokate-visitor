@@ -46,15 +46,16 @@ const Form = () => {
   }, [router]);
 
   const calculateAge = (dobString) => {
-    if (!dobString) return "";
+    if (!dobString || !/^\d{4}-\d{2}-\d{2}$/.test(dobString)) return "";
     const today = new Date();
     const birthDate = new Date(dobString);
+    if (isNaN(birthDate.getTime())) return "";
     let calculatedAge = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       calculatedAge--;
     }
-    return calculatedAge >= 0 ? calculatedAge.toString() : "";
+    return calculatedAge >= 0 && calculatedAge <= 120 ? calculatedAge.toString() : "";
   };
 
   const handleTextChange = useCallback((name, value) => {
@@ -126,12 +127,16 @@ const Form = () => {
           formattedDOB = new Date(data.DOB).toISOString().split("T")[0];
         }
 
-        setFormData((prev) => ({
-          ...prev,
-          ...data,
-          DOB: formattedDOB,
-          purpose: "",
-        }));
+        setFormData((prev) => {
+          const updated = {
+            ...prev,
+            ...data,
+            DOB: formattedDOB,
+            purpose: "",
+          };
+          updated.age = calculateAge(formattedDOB);
+          return updated;
+        });
 
         setErrors({});
         toast.success(`पुन्हा स्वागत आहे, ${data.fullName}! तुमचे तपशील भरले गेले आहेत.`);
@@ -192,6 +197,15 @@ const Form = () => {
         const today = new Date();
         if (dobDate > today) {
           newErrors.DOB = "जन्मतारीख भविष्यातील नसावी.";
+        } else {
+          let calculatedAge = today.getFullYear() - dobDate.getFullYear();
+          const m = today.getMonth() - dobDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+            calculatedAge--;
+          }
+          if (calculatedAge > 120) {
+            newErrors.DOB = "जन्मतारीख १२० वर्षांपेक्षा जुनी नसावी.";
+          }
         }
       }
 
@@ -352,10 +366,12 @@ const Form = () => {
 
     setIsSubmitting(true);
     try {
+      const addedBy = localStorage.getItem("username") || "";
+      const payload = { ...formData, addedBy };
       const res = await fetch("/api/addform", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (res.ok) {
