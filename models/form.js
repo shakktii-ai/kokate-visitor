@@ -1,14 +1,18 @@
 import mongoose from 'mongoose';
-import dns from 'dns';
 
-// Force Node.js to use public DNS servers (Google/Cloudflare) to resolve MongoDB Atlas SRV connection strings
-if (dns && typeof dns.setServers === "function") {
-    dns.setServers(["8.8.8.8", "1.1.1.1"]);
-}
-
-// Force Node.js to prefer IPv4 DNS resolution to fix MongoDB Atlas SRV lookup issues on Windows
-if (dns && typeof dns.setDefaultResultOrder === "function") {
-    dns.setDefaultResultOrder("ipv4first");
+// Force Node.js to use public DNS servers to resolve MongoDB Atlas SRV connection strings on Windows/server side
+if (typeof window === "undefined") {
+  try {
+    const dns = eval("require")('dns');
+    // if (dns && typeof dns.setServers === "function") {
+    //   dns.setServers(["8.8.8.8", "1.1.1.1"]);
+    // }
+    if (dns && typeof dns.setDefaultResultOrder === "function") {
+      dns.setDefaultResultOrder("ipv4first");
+    }
+  } catch (err) {
+    console.warn("dns module not loaded", err);
+  }
 }
 
 const FormDataSchema = new mongoose.Schema({
@@ -72,6 +76,8 @@ const FormDataSchema = new mongoose.Schema({
   projectProblem: String,
   message: String,
   addedBy: String,
+  status: { type: String, default: "Pending" },
+  followUp: { type: String, default: "" },
 }, { timestamps: true });
 
 export default mongoose.models.FormData || mongoose.model('FormData', FormDataSchema);

@@ -52,6 +52,14 @@ const Navbar = () => {
           >
             Register
           </Link>
+          <Link
+            href="/my-submissions"
+            className={`text-sm font-medium transition-colors ${
+              router.pathname === "/my-submissions" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+            }`}
+          >
+            My Submissions
+          </Link>
           <button
             onClick={handleLogout}
             className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
@@ -94,6 +102,9 @@ const Navbar = () => {
           </Link>
           <Link href="/form" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
             Register
+          </Link>
+          <Link href="/my-submissions" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
+            My Submissions
           </Link>
           <button
             onClick={handleLogout}

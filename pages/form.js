@@ -37,6 +37,7 @@ const Form = () => {
   // Revisit Lookup States
   const [searchPhone, setSearchPhone] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [foundVisitorName, setFoundVisitorName] = useState("");
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole");
@@ -138,14 +139,17 @@ const Form = () => {
           return updated;
         });
 
+        setFoundVisitorName(data.fullName || "");
         setErrors({});
         toast.success(`पुन्हा स्वागत आहे, ${data.fullName}! तुमचे तपशील भरले गेले आहेत.`);
-        setCurrentStep(3);
+        // Note: We stay on Step 1 to let the user review and confirm the pre-filled details including the name.
       } else {
+        setFoundVisitorName("");
         toast.error(data.error || "कोणतीही नोंद सापडली नाही. कृपया नवीन भेट देणारे म्हणून नोंदणी करा.");
       }
     } catch (error) {
       console.error("Error looking up returning visitor:", error);
+      setFoundVisitorName("");
       toast.error("तपशील शोधताना त्रुटी आली. कृपया स्वतः तपशील भरा.");
     } finally {
       setIsSearching(false);
@@ -730,7 +734,18 @@ const Form = () => {
                   type="tel"
                   placeholder="नोंदणीकृत फोन नंबर टाका..."
                   value={searchPhone}
-                  onChange={(e) => setSearchPhone(e.target.value)}
+                  onChange={(e) => {
+                    setSearchPhone(e.target.value);
+                    if (foundVisitorName) {
+                      setFoundVisitorName("");
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleRevisitLookup();
+                    }
+                  }}
                   className="flex-1 px-4 py-2.5 bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 rounded-xl text-slate-800 placeholder-slate-400 outline-none text-sm transition-all"
                 />
                 <button
@@ -752,6 +767,15 @@ const Form = () => {
                   )}
                 </button>
               </div>
+              {foundVisitorName && (
+                <div className="mt-3 p-3.5 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2.5 animate-fade-in shadow-sm">
+                  <HiCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <div className="text-sm">
+                    <span className="text-slate-600">सापडलेले नाव: </span>
+                    <strong className="text-slate-800 font-bold">{foundVisitorName}</strong>
+                  </div>
+                </div>
+              )}
             </div>
 
             <h3 className="text-xl font-bold text-slate-800">वैयक्तिक माहिती</h3>
@@ -957,6 +981,7 @@ const Form = () => {
                         message: "",
                       });
                       setSearchPhone("");
+                      setFoundVisitorName("");
                       setErrors({});
                       setIsSubmitted(false);
                       setCurrentStep(1);

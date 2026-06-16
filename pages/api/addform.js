@@ -76,6 +76,8 @@ const handler = async (req, res) => {
       projectProblem: data.projectProblem,
       message: data.message,
       addedBy: data.addedBy,
+      status: data.status || 'Pending',
+      followUp: data.followUp || '',
     });
 
     await newVisit.save();
