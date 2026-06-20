@@ -1,5 +1,6 @@
 import Worker from '@/models/worker';
 import connectDb from '@/middleware/mongoose';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -8,6 +9,12 @@ const handler = async (req, res) => {
 
   try {
     const data = req.body;
+
+    // Upload worker photo to Cloudinary
+    let photoUrl = "";
+    if (data.photo) {
+      photoUrl = await uploadToCloudinary(data.photo, 'workers');
+    }
 
     const newWorker = new Worker({
       firstName: data.firstName,
@@ -33,6 +40,9 @@ const handler = async (req, res) => {
       motherName: data.motherName,
       motherDOB: data.motherDOB,
       parentsAnniversaryDate: data.parentsAnniversaryDate,
+      photo: photoUrl,
+      createdBy: data.createdBy || 'admin',
+      addedBy: data.addedBy || '',
     });
 
     await newWorker.save();
@@ -42,6 +52,14 @@ const handler = async (req, res) => {
     console.error('Error registering worker:', error);
     return res.status(500).json({ success: false, message: 'Error registering worker' });
   }
+};
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
 };
 
 export default connectDb(handler);

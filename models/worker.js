@@ -39,6 +39,9 @@ const WorkerSchema = new mongoose.Schema({
   motherName: { type: String },
   motherDOB: { type: Date },
   parentsAnniversaryDate: { type: Date },
+  photo: { type: String },
+  createdBy: { type: String, default: "admin", enum: ["admin", "user"] },
+  addedBy: { type: String },
 }, { timestamps: true });
 
 export default mongoose.models.Worker || mongoose.model('Worker', WorkerSchema);

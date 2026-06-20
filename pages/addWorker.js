@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import WorkerForm from "@/components/WorkerForm";
-import "react-toastify/dist/ReactToastify.css";
 
-export default function AddWorker() {
+export default function AddWorkerUser() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
-    if (role !== "admin") {
+    if (role !== "user") {
       router.push("/login");
     }
   }, [router]);
@@ -19,10 +18,10 @@ export default function AddWorker() {
   const handleSubmit = async (formData) => {
     setIsSubmitting(true);
     try {
-      const username = localStorage.getItem("username") || "admin";
+      const username = localStorage.getItem("username") || "user";
       const payload = {
         ...formData,
-        createdBy: "admin",
+        createdBy: "user",
         addedBy: username,
       };
 
@@ -36,7 +35,7 @@ export default function AddWorker() {
       if (res.ok && data.success) {
         toast.success("कार्यकर्त्याची यशस्वी नोंदणी झाली!");
         setTimeout(() => {
-          router.push("/admin/workers");
+          router.push("/workers");
         }, 1500);
       } else {
         toast.error(data.message || "नोंदणी सबमिट करण्यास अपयश आले.");
@@ -52,17 +51,15 @@ export default function AddWorker() {
   return (
     <>
       <Head>
-        <title>कार्यकर्ता नोंदणी फॉर्म – Smt Mayuri Rahul Kokate</title>
-        <meta name="description" content="Worker registration form for admin panel." />
+        <title>नवीन कार्यकर्ता नोंदणी – Smt Mayuri Rahul Kokate</title>
+        <meta name="description" content="Add a new worker under your management." />
       </Head>
-
-      <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
 
       <WorkerForm
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        backPath="/admin/workers"
-        createdBy="admin"
+        backPath="/workers"
+        createdBy="user"
       />
     </>
   );

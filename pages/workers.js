@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
-import { HiSearch, HiFilter, HiTrash, HiEye, HiUserAdd, HiRefresh, HiPencil } from "react-icons/hi";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
+import { HiSearch, HiTrash, HiEye, HiUserAdd, HiRefresh, HiPencil } from "react-icons/hi";
 
 const POSITIONS = [
   "बूथ प्रमुख",
@@ -191,8 +190,8 @@ const ConfirmModal = ({ worker, onConfirm, onCancel }) => (
   </div>
 );
 
-/* ─── Main Workers Manager Page ────────────────────────────── */
-export default function WorkersList() {
+/* ─── Main Workers List Page ────────────────────────────────── */
+export default function WorkersListUser() {
   const router = useRouter();
 
   const [workers, setWorkers] = useState([]);
@@ -211,7 +210,7 @@ export default function WorkersList() {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
-    if (role !== "admin") {
+    if (role !== "user") {
       router.push("/login");
     }
   }, [router]);
@@ -219,11 +218,13 @@ export default function WorkersList() {
   const fetchWorkers = useCallback(async () => {
     setLoading(true);
     try {
+      const username = localStorage.getItem("username") || "";
+      if (!username) return;
+
       const params = new URLSearchParams({ page, limit, search, position, sort });
-      const username = localStorage.getItem("username") || "admin";
       const res = await fetch(`/api/workers?${params}`, {
         headers: {
-          "x-user-role": "admin",
+          "x-user-role": "user",
           "x-username": username,
         },
       });
@@ -254,11 +255,11 @@ export default function WorkersList() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      const username = localStorage.getItem("username") || "admin";
+      const username = localStorage.getItem("username") || "";
       const res = await fetch(`/api/workers?id=${deleteTarget._id}`, {
         method: "DELETE",
         headers: {
-          "x-user-role": "admin",
+          "x-user-role": "user",
           "x-username": username,
         },
       });
@@ -278,19 +279,17 @@ export default function WorkersList() {
   return (
     <>
       <Head>
-        <title>कार्यकर्ता यादी – VisitorPass Admin</title>
-        <meta name="description" content="Manage and view all registered workers." />
+        <title>माझे कार्यकर्ते – Smt Mayuri Rahul Kokate</title>
+        <meta name="description" content="View and manage workers you registered." />
       </Head>
 
-      <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
-
-      <div className="p-4 md:p-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">कार्यकर्ता यादी (Workers Manager)</h1>
-            <p className="text-slate-500 text-sm mt-0.5">
-              एकूण {total} कार्यकर्ता नोंदणीकृत आहेत
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">माझे कार्यकर्ते (My Workers)</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              तुमच्याद्वारे नोंदणीकृत एकूण {total} कार्यकर्ते खालीलप्रमाणे आहेत.
             </p>
           </div>
           <div className="flex gap-2.5">
@@ -302,7 +301,7 @@ export default function WorkersList() {
               ताजेतवाने करा (Refresh)
             </button>
             <button
-              onClick={() => router.push("/admin/addWorker")}
+              onClick={() => router.push("/addWorker")}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
             >
               <HiUserAdd className="w-4.5 h-4.5" />
@@ -321,7 +320,7 @@ export default function WorkersList() {
               placeholder="नाव, मोबाईल, गाव किंवा पदाने शोधा..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 rounded-xl text-slate-800 placeholder-slate-400 text-sm transition-all"
             />
           </div>
 
@@ -329,7 +328,7 @@ export default function WorkersList() {
           <select
             value={position}
             onChange={(e) => handlePosition(e.target.value)}
-            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
+            className="px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 rounded-xl text-slate-700 text-sm transition-all outline-none"
           >
             <option value="">सर्व पदे (All Positions)</option>
             {POSITIONS.map((p) => (
@@ -341,7 +340,7 @@ export default function WorkersList() {
           <select
             value={sort}
             onChange={(e) => handleSort(e.target.value)}
-            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
+            className="px-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 rounded-xl text-slate-700 text-sm transition-all outline-none"
           >
             <option value="newest">नवीन आधी (Newest)</option>
             <option value="oldest">जुने आधी (Oldest)</option>
@@ -355,9 +354,15 @@ export default function WorkersList() {
               <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
             </div>
           ) : workers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-              <span className="text-3xl mb-2">👥</span>
+            <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-center p-8">
+              <span className="text-3xl mb-2 block">👥</span>
               <p className="text-sm">कोणतेही कार्यकर्ते आढळले नाहीत.</p>
+              <button
+                onClick={() => router.push("/addWorker")}
+                className="mt-4 px-6 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm transition-all"
+              >
+                पहिला कार्यकर्ता नोंदवा
+              </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -369,7 +374,6 @@ export default function WorkersList() {
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">संपर्क (Contact)</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">गाव / बूथ (Area/Booth)</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">पक्षीय जबाबदारी (Position)</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">नोंदणीकर्ता</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">नोंदणी दिनांक</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">कृती (Actions)</th>
                   </tr>
@@ -409,11 +413,6 @@ export default function WorkersList() {
                           {w.position}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${w.createdBy === "admin" ? "bg-orange-50 text-orange-700 border border-orange-100" : "bg-blue-50 text-blue-700 border border-blue-100"}`}>
-                          {w.createdBy === "admin" ? "Admin" : w.addedBy || "User"}
-                        </span>
-                      </td>
                       <td className="px-4 py-3 text-slate-500 text-xs">
                         {w.createdAt ? new Date(w.createdAt).toLocaleDateString("mr-IN") : "—"}
                       </td>
@@ -427,7 +426,7 @@ export default function WorkersList() {
                             <HiEye className="w-4.5 h-4.5" />
                           </button>
                           <button
-                            onClick={() => router.push(`/admin/edit-worker/${w._id}`)}
+                            onClick={() => router.push(`/edit-worker/${w._id}`)}
                             className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-500 transition-colors"
                             title="माहिती बदला (Edit)"
                           >

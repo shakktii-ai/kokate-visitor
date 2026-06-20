@@ -2,32 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { toast, ToastContainer } from "react-toastify";
-import { HiSearch, HiFilter, HiTrash, HiEye, HiUserAdd, HiRefresh, HiPencil } from "react-icons/hi";
+import { HiSearch, HiTrash, HiEye, HiPlus, HiRefresh, HiPencil } from "react-icons/hi";
 import "react-toastify/dist/ReactToastify.css";
 
-const POSITIONS = [
-  "बूथ प्रमुख",
-  "शक्ती केंद्र प्रमुख",
-  "मंडळ अध्यक्ष",
-  "मंडळ सरचिटणीस",
-  "शहर उपाध्यक्ष",
-  "जिल्हा कार्यकारिणी सदस्य",
-  "कार्यकर्ता",
-];
-
-const positionColors = {
-  "बूथ प्रमुख":            "bg-blue-50 text-blue-700 border-blue-200",
-  "शक्ती केंद्र प्रमुख":    "bg-purple-50 text-purple-700 border-purple-200",
-  "मंडळ अध्यक्ष":        "bg-red-50 text-red-700 border-red-200",
-  "मंडळ सरचिटणीस":      "bg-amber-50 text-amber-700 border-amber-200",
-  "शहर उपाध्यक्ष":        "bg-cyan-50 text-cyan-700 border-cyan-200",
-  "जिल्हा कार्यकारिणी सदस्य": "bg-slate-50 text-slate-700 border-slate-200",
-  "कार्यकर्ता":          "bg-green-50 text-green-700 border-green-200",
-};
-
 /* ─── Detail Modal ─────────────────────────────────────────── */
-const DetailModal = ({ worker, onClose }) => {
-  if (!worker) return null;
+const DetailModal = ({ letter, onClose }) => {
+  if (!letter) return null;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
@@ -40,51 +20,29 @@ const DetailModal = ({ worker, onClose }) => {
 
   const sections = [
     {
-      title: "१. वैयक्तिक माहिती (Personal Info)",
+      title: "१. पत्राचा तपशील (Core Details)",
       fields: [
-        ["नाव (Full Name)", `${worker.firstName} ${worker.middleName || ""} ${worker.lastName}`],
-        ["जन्मतारीख (DOB)", formatDate(worker.DOB)],
-        ["वैवाहिक स्थिती (Marital Status)", worker.maritalStatus || "—"],
+        ["विषय (Subject)", letter.subject],
+        ["आवक क्रमांक (Inward Number)", letter.inwardNumber],
+        ["पत्र कोणास संबोधित केले (Addressed To)", letter.letterAddressedTo || "—"],
+        ["खाते (Department)", letter.department || "—"],
+        ["तपशील माहिती (Description)", letter.details || "—"],
       ]
     },
     {
-      title: "२. पत्ता आणि संपर्क (Address & Contacts)",
+      title: "२. नियुक्ती आणि कार्यवाही (Assignment & Actions)",
       fields: [
-        ["प्राथमिक मोबाईल (Mobile)", worker.primaryPhone],
-        ["पर्यायी मोबाईल (Alt Mobile)", worker.alternativePhone || "—"],
-        ["घर क्रमांक (House No)", worker.houseNo || "—"],
-        ["रस्ता / गल्ली (Street)", worker.street || "—"],
-        ["गाव / शहर (Village)", worker.village || "—"],
-        ["तालुका (Taluka)", worker.taluka || "—"],
-        ["जिल्हा (District)", worker.district || "—"],
-        ["पिन कोड (Pincode)", worker.pincode || "—"],
+        ["नियुक्त केलेली व्यक्ती (Assigned To)", letter.assignedPerson || "—"],
+        ["संपर्क क्रमांक (Contact)", letter.contactNumber || "—"],
+        ["पुढील कार्यवाही (Next Action)", letter.nextAction || "—"],
+        ["पुढील पाठपुराव्याची तारीख (Follow-up Date)", formatDate(letter.followUpDate)],
       ]
     },
     {
-      title: "३. संघटना / जबाबदारी (Position & Area)",
+      title: "३. नोंदणी माहिती (Registration Info)",
       fields: [
-        ["पद (Position)", worker.position],
-        ["क्षेत्र / बूथ क्रमांक (Area/Booth)", worker.areaNameOrBooth || "—"],
-      ]
-    },
-    {
-      title: "४. कौटुंबिक माहिती (Family Details)",
-      fields: [
-        ["पती / पत्नीचे नाव", worker.spouseName || "—"],
-        ["पती / पत्नीची जन्मतारीख", formatDate(worker.spouseDOB)],
-        ["लग्नाचा वाढदिवस", formatDate(worker.anniversaryDate)],
-        ["वडिलांचे नाव", worker.fatherName || "—"],
-        ["वडिलांची जन्मतारीख", formatDate(worker.fatherDOB)],
-        ["आईचे नाव", worker.motherName || "—"],
-        ["आईची जन्मतारीख", formatDate(worker.motherDOB)],
-        ["पालकांच्या लग्नाचा वाढदिवस", formatDate(worker.parentsAnniversaryDate)],
-      ]
-    },
-    {
-      title: "५. नोंदणी माहिती (Registration Info)",
-      fields: [
-        ["नोंदणीकर्ता (Created By)", worker.createdBy === "admin" ? "Admin" : `User (${worker.addedBy || "—"})`],
-        ["नोंदणी दिनांक (Registered On)", worker.createdAt ? new Date(worker.createdAt).toLocaleString("mr-IN") : "—"],
+        ["नोंदणीकर्ता (Created By)", letter.createdBy === "admin" ? "Admin" : `User (${letter.addedBy || "—"})`],
+        ["नोंदणी दिनांक (Registered On)", letter.createdAt ? new Date(letter.createdAt).toLocaleString("mr-IN") : "—"],
       ]
     }
   ];
@@ -102,23 +60,23 @@ const DetailModal = ({ worker, onClose }) => {
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-orange-100 px-6 py-4 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
-              {worker.photo ? (
+              {letter.photo ? (
                 <img
-                  src={worker.photo}
-                  alt={`${worker.firstName} ${worker.lastName}`}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-orange-200"
+                  src={letter.photo}
+                  alt={letter.subject}
+                  className="w-12 h-12 rounded-xl object-cover border-2 border-orange-200"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-lg">
-                  {worker.firstName?.[0]?.toUpperCase() || "?"}
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 font-bold text-lg">
+                  ✉️
                 </div>
               )}
               <div>
-                <h2 className="text-xl font-bold text-slate-800 leading-tight">
-                  {worker.firstName} {worker.lastName}
+                <h2 className="text-lg font-bold text-slate-800 leading-tight">
+                  {letter.subject}
                 </h2>
-                <span className={`inline-flex mt-1.5 text-xs px-2.5 py-0.5 rounded-full font-medium border ${positionColors[worker.position] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                  {worker.position}
+                <span className="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-medium bg-slate-50 border border-slate-200 text-slate-600">
+                  आवक क्र: {letter.inwardNumber}
                 </span>
               </div>
             </div>
@@ -132,6 +90,17 @@ const DetailModal = ({ worker, onClose }) => {
 
           {/* Body */}
           <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+            {letter.photo && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-slate-800 border-b border-orange-50 pb-1">पत्राची प्रतिमा (Letter Photo)</h3>
+                <div className="flex justify-center bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <a href={letter.photo} target="_blank" rel="noopener noreferrer" title="Click to view full image">
+                    <img src={letter.photo} alt="Document preview" className="max-h-96 object-contain rounded-xl shadow-sm hover:scale-[1.02] transition-transform duration-300" />
+                  </a>
+                </div>
+              </div>
+            )}
+
             {sections.map((section) => (
               <div key={section.title} className="space-y-3">
                 <h3 className="text-sm font-bold text-slate-800 border-b border-orange-50 pb-1">{section.title}</h3>
@@ -139,7 +108,7 @@ const DetailModal = ({ worker, onClose }) => {
                   {section.fields.map(([label, value]) => (
                     <div key={label} className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
                       <p className="text-xs text-slate-400 mb-1 font-semibold">{label}</p>
-                      <p className="text-sm font-medium text-slate-800 break-words">{value}</p>
+                      <p className="text-sm font-medium text-slate-800 break-words whitespace-pre-line">{value}</p>
                     </div>
                   ))}
                 </div>
@@ -163,15 +132,15 @@ const DetailModal = ({ worker, onClose }) => {
 };
 
 /* ─── Confirm Delete Modal ─────────────────────────────────── */
-const ConfirmModal = ({ worker, onConfirm, onCancel }) => (
+const ConfirmModal = ({ letter, onConfirm, onCancel }) => (
   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-orange-100">
       <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 text-red-500 text-2xl">
         ⚠️
       </div>
-      <h3 className="text-slate-800 font-bold text-lg mb-2">कार्यकर्ता डिलीट करायचा?</h3>
+      <h3 className="text-slate-800 font-bold text-lg mb-2">पत्र डिलीट करायचे?</h3>
       <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-        आपण खरोखरच <span className="font-semibold text-slate-700">{worker.firstName} {worker.lastName}</span> यांची नोंदणी हटवू इच्छिता? ही क्रिया पूर्ववत करता येणार नाही.
+        आपण खरोखरच <span className="font-semibold text-slate-700">"{letter.subject}"</span> पत्राची नोंदणी हटवू इच्छिता? ही क्रिया पूर्ववत करता येणार नाही.
       </p>
       <div className="flex gap-3">
         <button
@@ -191,22 +160,21 @@ const ConfirmModal = ({ worker, onConfirm, onCancel }) => (
   </div>
 );
 
-/* ─── Main Workers Manager Page ────────────────────────────── */
-export default function WorkersList() {
+/* ─── Main Letters Manager Page ────────────────────────────── */
+export default function LettersList() {
   const router = useRouter();
 
-  const [workers, setWorkers] = useState([]);
+  const [letters, setLetters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const [search, setSearch] = useState("");
-  const [position, setPosition] = useState("");
   const [sort, setSort] = useState("newest");
   const limit = 10;
 
-  const [selectedWorker, setSelectedWorker] = useState(null);
+  const [selectedLetter, setSelectedLetter] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
@@ -216,12 +184,12 @@ export default function WorkersList() {
     }
   }, [router]);
 
-  const fetchWorkers = useCallback(async () => {
+  const fetchLetters = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page, limit, search, position, sort });
+      const params = new URLSearchParams({ page, limit, search, sort });
       const username = localStorage.getItem("username") || "admin";
-      const res = await fetch(`/api/workers?${params}`, {
+      const res = await fetch(`/api/letters?${params}`, {
         headers: {
           "x-user-role": "admin",
           "x-username": username,
@@ -229,11 +197,11 @@ export default function WorkersList() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setWorkers(data.workers);
+        setLetters(data.letters);
         setTotal(data.total);
         setTotalPages(data.totalPages);
       } else {
-        toast.error("कार्यकर्ता यादी मिळवण्यात अडचण आली.");
+        toast.error("पत्र यादी मिळवण्यात अडचण आली.");
       }
     } catch (err) {
       console.error(err);
@@ -241,21 +209,20 @@ export default function WorkersList() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, position, sort]);
+  }, [page, search, sort]);
 
   useEffect(() => {
-    fetchWorkers();
-  }, [fetchWorkers]);
+    fetchLetters();
+  }, [fetchLetters]);
 
   const handleSearch = (val) => { setSearch(val); setPage(1); };
-  const handlePosition = (val) => { setPosition(val); setPage(1); };
   const handleSort = (val) => { setSort(val); setPage(1); };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
       const username = localStorage.getItem("username") || "admin";
-      const res = await fetch(`/api/workers?id=${deleteTarget._id}`, {
+      const res = await fetch(`/api/letters?id=${deleteTarget._id}`, {
         method: "DELETE",
         headers: {
           "x-user-role": "admin",
@@ -264,9 +231,9 @@ export default function WorkersList() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("कार्यकर्त्याची नोंदणी यशस्वीरीत्या डिलीट केली.");
+        toast.success("पत्राची नोंदणी यशस्वीरीत्या डिलीट केली.");
         setDeleteTarget(null);
-        fetchWorkers();
+        fetchLetters();
       } else {
         toast.error(data.error || "डिलीट करण्यास अपयश आले.");
       }
@@ -278,8 +245,8 @@ export default function WorkersList() {
   return (
     <>
       <Head>
-        <title>कार्यकर्ता यादी – VisitorPass Admin</title>
-        <meta name="description" content="Manage and view all registered workers." />
+        <title>पत्र यादी (Inward Letters) – Admin Panel</title>
+        <meta name="description" content="Manage and view all inward letters." />
       </Head>
 
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
@@ -288,25 +255,25 @@ export default function WorkersList() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">कार्यकर्ता यादी (Workers Manager)</h1>
+            <h1 className="text-2xl font-bold text-slate-800">आवक पत्र व्यवस्थापन (Inward Letters Manager)</h1>
             <p className="text-slate-500 text-sm mt-0.5">
-              एकूण {total} कार्यकर्ता नोंदणीकृत आहेत
+              एकूण {total} पत्रे नोंदणीकृत आहेत
             </p>
           </div>
           <div className="flex gap-2.5">
             <button
-              onClick={fetchWorkers}
+              onClick={fetchLetters}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors"
             >
               <HiRefresh className="w-4.5 h-4.5" />
               ताजेतवाने करा (Refresh)
             </button>
             <button
-              onClick={() => router.push("/admin/addWorker")}
+              onClick={() => router.push("/admin/addLetter")}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
             >
-              <HiUserAdd className="w-4.5 h-4.5" />
-              नवीन कार्यकर्ता
+              <HiPlus className="w-4.5 h-4.5" />
+              नवीन पत्र
             </button>
           </div>
         </div>
@@ -318,24 +285,12 @@ export default function WorkersList() {
             <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
             <input
               type="text"
-              placeholder="नाव, मोबाईल, गाव किंवा पदाने शोधा..."
+              placeholder="विषय, आवक क्र., विभाग किंवा नियुक्तीने शोधा..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
             />
           </div>
-
-          {/* Position filter */}
-          <select
-            value={position}
-            onChange={(e) => handlePosition(e.target.value)}
-            className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
-          >
-            <option value="">सर्व पदे (All Positions)</option>
-            {POSITIONS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
 
           {/* Sort */}
           <select
@@ -354,10 +309,10 @@ export default function WorkersList() {
             <div className="flex items-center justify-center h-48">
               <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
             </div>
-          ) : workers.length === 0 ? (
+          ) : letters.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-              <span className="text-3xl mb-2">👥</span>
-              <p className="text-sm">कोणतेही कार्यकर्ते आढळले नाहीत.</p>
+              <span className="text-3xl mb-2">✉️</span>
+              <p className="text-sm">कोणतेही पत्र आढळले नाही.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -365,76 +320,68 @@ export default function WorkersList() {
                 <thead className="bg-orange-50/60 border-b border-orange-100">
                   <tr>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">#</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">नाव (Name)</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">संपर्क (Contact)</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">गाव / बूथ (Area/Booth)</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">पक्षीय जबाबदारी (Position)</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">विषय (Subject)</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">आवक क्रमांक</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">खाते (Department)</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">नियुक्त व्यक्ती</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">नोंदणीकर्ता</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">नोंदणी दिनांक</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">कृती (Actions)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {workers.map((w, idx) => (
-                    <tr key={w._id} className="hover:bg-orange-50/20 transition-colors">
+                  {letters.map((l, idx) => (
+                    <tr key={l._id} className="hover:bg-orange-50/20 transition-colors">
                       <td className="px-4 py-3 text-slate-400 text-xs">
                         {(page - 1) * limit + idx + 1}
                       </td>
                       <td className="px-4 py-3 font-semibold text-slate-800">
                         <div className="flex items-center gap-3">
-                          {w.photo ? (
-                            <img src={w.photo} alt={w.firstName} className="w-8 h-8 rounded-full object-cover border border-slate-100 flex-shrink-0" />
+                          {l.photo ? (
+                            <img src={l.photo} alt={l.subject} className="w-8 h-8 rounded object-cover border border-slate-100 flex-shrink-0" />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-[10px] flex-shrink-0">
-                              {w.firstName?.[0]?.toUpperCase() || "?"}
+                            <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 text-xs flex-shrink-0 font-bold">
+                              ✉️
                             </div>
                           )}
-                          <span>{w.firstName} {w.middleName || ""} {w.lastName}</span>
+                          <span className="truncate max-w-xs">{l.subject}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 space-y-0.5">
-                        <p className="text-slate-700 font-medium">{w.primaryPhone}</p>
-                        {w.alternativePhone && (
-                          <p className="text-slate-400 text-xs">पर्यायी: {w.alternativePhone}</p>
-                        )}
+                      <td className="px-4 py-3 text-slate-700 font-medium">
+                        {l.inwardNumber}
                       </td>
-                      <td className="px-4 py-3 space-y-0.5">
-                        <p className="text-slate-700">{w.village || "—"}</p>
-                        {w.areaNameOrBooth && (
-                          <p className="text-slate-400 text-xs">{w.areaNameOrBooth}</p>
-                        )}
+                      <td className="px-4 py-3 text-slate-600">
+                        {l.department || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {l.assignedPerson || "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${positionColors[w.position] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                          {w.position}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${w.createdBy === "admin" ? "bg-orange-50 text-orange-700 border border-orange-100" : "bg-blue-50 text-blue-700 border border-blue-100"}`}>
-                          {w.createdBy === "admin" ? "Admin" : w.addedBy || "User"}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${l.createdBy === "admin" ? "bg-orange-50 text-orange-700 border border-orange-100" : "bg-blue-50 text-blue-700 border border-blue-100"}`}>
+                          {l.createdBy === "admin" ? "Admin" : l.addedBy || "User"}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-xs">
-                        {w.createdAt ? new Date(w.createdAt).toLocaleDateString("mr-IN") : "—"}
+                        {l.createdAt ? new Date(l.createdAt).toLocaleDateString("mr-IN") : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <button
-                            onClick={() => setSelectedWorker(w)}
+                            onClick={() => setSelectedLetter(l)}
                             className="p-1.5 rounded-lg hover:bg-orange-100 text-orange-500 transition-colors"
                             title="तपशील पहा"
                           >
                             <HiEye className="w-4.5 h-4.5" />
                           </button>
                           <button
-                            onClick={() => router.push(`/admin/edit-worker/${w._id}`)}
+                            onClick={() => router.push(`/admin/edit-letter/${l._id}`)}
                             className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-500 transition-colors"
                             title="माहिती बदला (Edit)"
                           >
                             <HiPencil className="w-4.5 h-4.5" />
                           </button>
                           <button
-                            onClick={() => setDeleteTarget(w)}
+                            onClick={() => setDeleteTarget(l)}
                             className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600 transition-colors"
                             title="काढून टाका"
                           >
@@ -454,7 +401,7 @@ export default function WorkersList() {
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-slate-500 text-xs">
-              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} workers
+              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} letters
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -490,17 +437,17 @@ export default function WorkersList() {
       </div>
 
       {/* Detail Modal */}
-      {selectedWorker && (
+      {selectedLetter && (
         <DetailModal
-          worker={selectedWorker}
-          onClose={() => setSelectedWorker(null)}
+          letter={selectedLetter}
+          onClose={() => setSelectedLetter(null)}
         />
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <ConfirmModal
-          worker={deleteTarget}
+          letter={deleteTarget}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />

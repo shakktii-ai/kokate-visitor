@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { toast, ToastContainer } from "react-toastify";
-import WorkerForm from "@/components/WorkerForm";
+import LetterForm from "@/components/LetterForm";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function AddWorker() {
+export default function AddLetterAdmin() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,7 +26,7 @@ export default function AddWorker() {
         addedBy: username,
       };
 
-      const res = await fetch("/api/workers/add", {
+      const res = await fetch("/api/letters/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -34,9 +34,9 @@ export default function AddWorker() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("कार्यकर्त्याची यशस्वी नोंदणी झाली!");
+        toast.success("पत्राची यशस्वी नोंदणी झाली!");
         setTimeout(() => {
-          router.push("/admin/workers");
+          router.push("/admin/letters");
         }, 1500);
       } else {
         toast.error(data.message || "नोंदणी सबमिट करण्यास अपयश आले.");
@@ -52,16 +52,16 @@ export default function AddWorker() {
   return (
     <>
       <Head>
-        <title>कार्यकर्ता नोंदणी फॉर्म – Smt Mayuri Rahul Kokate</title>
-        <meta name="description" content="Worker registration form for admin panel." />
+        <title>पत्र नोंदणी फॉर्म (Letter Inward Form) – Admin Panel</title>
+        <meta name="description" content="Inward letter registration form for Admin." />
       </Head>
 
       <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
 
-      <WorkerForm
+      <LetterForm
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        backPath="/admin/workers"
+        backPath="/admin/letters"
         createdBy="admin"
       />
     </>
